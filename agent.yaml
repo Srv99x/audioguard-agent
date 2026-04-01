@@ -1,0 +1,13 @@
+spec_version: "0.1.0"
+name: audioguard-agent
+version: 0.1.0
+description: "Detects deepfake audio risks in developer pipelines"
+model:
+  preferred: claude-sonnet-4-5-20250929
+skills:
+  - analyze-audio
+  - generate-report
+tags:
+  - hackathon
+  - audio-security
+  - deepfake-detection
