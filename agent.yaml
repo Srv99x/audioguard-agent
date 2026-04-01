@@ -3,7 +3,7 @@ name: audioguard-agent
 version: 0.1.0
 description: "Detects deepfake audio risks in developer pipelines"
 model:
-  preferred: claude-sonnet-4-5-20250929
+  preferred: gemini-1.5-pro
 skills:
   - analyze-audio
   - generate-report
