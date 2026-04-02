@@ -5,3 +5,7 @@ output.log
 sample.wav
 models.json
 .git_status.txt
+groq_test_output.txt
+analysis_result.txt
+reports/
+providers.json
