@@ -3,7 +3,10 @@ name: audioguard-agent
 version: 0.1.0
 description: "Detects deepfake audio risks in developer pipelines"
 model:
-  preferred: google:gemini-1.5-pro
+  preferred: google:gemini-2.5-flash
+runtime:
+  max_turns: 50
+  timeout: 30000
 skills:
   - analyze-audio
   - generate-report

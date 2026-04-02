@@ -1,1 +1,7 @@
 node_modules
+.gitagent/
+error.log
+output.log
+sample.wav
+models.json
+.git_status.txt
