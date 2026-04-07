@@ -2,55 +2,44 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from pathlib import Path
+import subprocess
 
 def analyze_audio(file_path):
+    """Compatibility wrapper around the real acoustic analyzer script."""
     if not os.path.exists(file_path):
+        return {"error": f"File not found: {file_path}", "file": file_path}
+
+    project_root = Path(__file__).resolve().parents[1]
+    analyzer_script = project_root / "skills" / "analyze-audio" / "scripts" / "analyze.py"
+    if not analyzer_script.exists():
         return {
-            "error": f"File not found: {file_path}",
+            "error": f"Analyzer script not found: {analyzer_script}",
             "file": file_path,
-            "timestamp": datetime.now(timezone.utc).isoformat()
         }
+
+    cmd = [sys.executable, str(analyzer_script), "--file", file_path]
+    completed = subprocess.run(cmd, capture_output=True, text=True)
+
+    if completed.returncode != 0:
+        stderr_msg = completed.stderr.strip() or completed.stdout.strip() or "Analyzer failed"
+        return {"error": stderr_msg, "file": file_path}
 
     try:
-        file_size = os.path.getsize(file_path)
-        file_name = os.path.basename(file_path)
-
-        # Acoustic heuristic simulation
-        size_factor = min((file_size / 100000) * 30, 40)
-        name_factor = 30 if any(x in file_name.lower() for x in ["fake", "synthetic", "gen", "ai"]) else 0
-        base_score = 25
-
-        risk_score = min(int(base_score + size_factor + name_factor), 100)
-        confidence = 85 if name_factor > 0 else 72
-
-        if confidence < 60:
-            label = "UNCERTAIN"
-        elif risk_score >= 70:
-            label = "DEEPFAKE"
-        elif risk_score >= 41:
-            label = "UNCERTAIN"
-        else:
-            label = "AUTHENTIC"
-
+        payload = json.loads(completed.stdout.strip())
+    except json.JSONDecodeError:
         return {
-            "file": file_name,
-            "risk_score": risk_score,
-            "confidence": confidence,
-            "label": label,
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
-
-    except Exception as e:
-        return {
-            "error": str(e),
+            "error": "Analyzer returned non-JSON output",
             "file": file_path,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "raw_output": completed.stdout.strip(),
         }
+
+    payload["wrapper_note"] = "scripts/analyze.py delegates to skills/analyze-audio/scripts/analyze.py"
+    return payload
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", required=True, help="Path to .wav file")
+    parser = argparse.ArgumentParser(description="AudioGuard analyzer compatibility wrapper")
+    parser.add_argument("--file", required=True, help="Path to audio file")
     args = parser.parse_args()
     result = analyze_audio(args.file)
     print(json.dumps(result, indent=2))
