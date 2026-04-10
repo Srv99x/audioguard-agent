@@ -1,7 +1,12 @@
 ---
 name: analyze-audio
-description: "Analyzes a .wav audio file for deepfake risk using acoustic feature extraction"
+description: Analyzes a .wav audio file for deepfake risk using acoustic feature extraction
 allowed-tools: Read Write cli
+confidence: 1
+usage_count: 1
+success_count: 1
+failure_count: 0
+negative_examples: []
 ---
 
 # Analyze Audio
