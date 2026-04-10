@@ -8,3 +8,4 @@ groq_test_output.txt
 analysis_result.txt
 reports/
 providers.json
+.env
