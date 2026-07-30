@@ -14,6 +14,7 @@ Built for the GitAgent Hackathon 2026 using the gitagent standard.
 
 ```bash
 npm install gitclaw
+pip install -r requirements.txt
 npx gitclaw run .
 ```
 
@@ -51,7 +52,7 @@ python skills/analyze-audio/scripts/analyze.py --file your-audio.wav
 
 - gitagent standard (spec 0.1.0)
 - gitclaw runtime
-- Google Gemini 2.5 Flash
+- Google Gemini 1.5 Flash
 - Python 3.13+
 
 ## Judging Criteria

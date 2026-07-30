@@ -21,6 +21,12 @@ def analyze(filepath):
         import librosa
 
         y, sr = librosa.load(filepath, sr=None, mono=True)
+
+        # Guard against empty audio files
+        if len(y) == 0:
+            print(json.dumps({"error": f"Audio file is empty or cannot be read: {filepath}"}))
+            sys.exit(1)
+
         duration = librosa.get_duration(y=y, sr=sr)
 
         # --- Feature 1: Spectral Centroid (unnatural if very flat or peaky) ---
@@ -105,6 +111,14 @@ def analyze(filepath):
     except ImportError:
         # Fallback: pure Python wave analysis
         result = _analyze_pure_python(filepath)
+    except Exception as e:
+        # Catch general librosa exceptions and audioread errors, fallback or error gracefully
+        try:
+            result = _analyze_pure_python(filepath)
+            # Annotate that librosa failed
+            result["analyzer"] += " (librosa failed: " + str(e) + ")"
+        except Exception:
+            result = {"error": f"Analysis failed: {str(e)}", "file": filepath}
 
     print(json.dumps(result))
 
@@ -119,11 +133,24 @@ def _analyze_pure_python(filepath):
             n_frames = wf.getnframes()
             duration = n_frames / framerate
 
+            if n_frames == 0:
+                 return {"error": "Audio file is empty", "file": filepath}
+
             raw = wf.readframes(n_frames)
-            fmt = f"<{n_frames * channels}h" if sample_width == 2 else f"<{n_frames * channels}B"
-            samples = struct.unpack(fmt, raw[:n_frames * channels * sample_width])
+
+            if sample_width == 1:
+                fmt = f"<{len(raw)}B"
+            elif sample_width == 2:
+                fmt = f"<{len(raw)//2}h"
+            else:
+                return {"error": f"Unsupported sample width: {sample_width} bytes. Only 8-bit and 16-bit audio are supported in pure Python fallback.", "file": filepath}
+
+            samples = struct.unpack(fmt, raw)
 
             # Basic stats
+            if not samples:
+                return {"error": "No valid samples extracted", "file": filepath}
+
             mean = sum(samples) / len(samples)
             variance = sum((s - mean) ** 2 for s in samples) / len(samples)
             std = math.sqrt(variance)
@@ -149,7 +176,7 @@ def _analyze_pure_python(filepath):
                     "zero_crossing_rate": round(zcr, 6),
                 },
                 "analyzer": "pure-python-fallback",
-                "note": "Install librosa for full acoustic analysis: pip install librosa"
+                "note": "Install librosa for full acoustic analysis: pip install -r requirements.txt"
             }
     except Exception as e:
         return {"error": str(e), "file": filepath}
